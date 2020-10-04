@@ -4,26 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"net/http"
-	"strconv"
 	"sync"
-	"time"
 
 	"log"
 )
 
 const (
-	PORT = ":8080"
-  BUMP_INTERVAL = 60 // 1 minute in seconds
+	PORT            = ":8080"
+	BUMP_INTERVAL   = 60 // 1 minute in seconds
 	STORE_FILE_NAME = "store.json"
 )
 
 var gs GuildStore
-
-type BumpRaw struct {
-	GuildId string `json:"guildId"`
-}
 
 type Guild struct {
 	GuildId   int   `json:"guildId"`
@@ -32,17 +25,23 @@ type Guild struct {
 
 type GuildStore struct {
 	Guilds []Guild `json:"guilds"`
-	mutex sync.Mutex
+	mutex  sync.Mutex
+}
+
+type BumpResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Payload Guild  `json:"payload"`
 }
 
 func init() {
-  var err error
+	var err error
 	gs.Guilds, err = LoadStore()
 	if err != nil {
 		log.Print(err)
 	} else {
 		log.Print("'Database' successfully restored!")
-    log.Print(fmt.Sprintf("%v guilds in 'database'", len(gs.Guilds)))
+		log.Print(fmt.Sprintf("%v guilds in 'database'", len(gs.Guilds)))
 	}
 }
 
@@ -53,97 +52,29 @@ func middleware(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-
-func BumpGuild(w http.ResponseWriter, r *http.Request) {
-  // Read request body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Print(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 - InternalServerError"))
-		return
-	}
-
-	// Unmarshal body into BumpRaw
-	var br BumpRaw
-	err = json.Unmarshal(body, &br)
-	if err != nil {
-		log.Print(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 - InternalServerError"))
-		return
-	}
-
-	// Convert BumpRaw.Guild_id into int64 from string
-	guildId, err := strconv.Atoi(br.GuildId)
-	if err != nil {
-		log.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("400 - BadRequest"))
-		return
-	}
-
-	// Constructing actual Bump object
-	ts := time.Now().Unix()
-	var guild = Guild{
-		GuildId:   guildId,
-		Timestamp: ts,
-	}
-
-  m, err := json.Marshal(guild)
-  if err != nil {
-    log.Print(err)
-    w.WriteHeader(http.StatusInternalServerError)
-    w.Write([]byte("500 - InternalServerError"))
-    return
-  }
-
-  if !gs.GuildInStore(guild) {
-    // guild is not yet present in GuildStore
-    gs.AddToStore(guild)
-    w.WriteHeader(http.StatusOK)
-    w.Write(m)
-  } else {
-
-    if gs.PastInterval(guild) {
-      // guild.Timestamp has exceeded BUMP_INTERVAL, Timestamp has been updated (bumped)
-      w.WriteHeader(http.StatusOK)
-      w.Write(m)
-    } else {
-      // guild.Timestamp has not exceeded BUMP_INTERVAL, not updated
-      guild.Timestamp = gs.GetTimestamp(guild)
-
-      // update m with new timestamp
-      m, err := json.Marshal(guild)
-      if err != nil {
-        log.Print(err)
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte("500 - InternalServerError"))
-        return
-      }
-
-      w.WriteHeader(http.StatusTooEarly)
-      w.Write(m)
-    }
-  }
-
-  err = gs.WriteStore()
-  if err != nil {
-    log.Panic(err)
-    w.WriteHeader(http.StatusInternalServerError)
-    w.Write([]byte("500 - InternalServerError"))
-    return
-  }
-}
-
 func HandleRequests() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/V1/bump", middleware(BumpGuild)).Methods("POST")
-  log.Print(fmt.Sprintf("Now serving: localhost%s", PORT))
-  err := http.ListenAndServe(PORT, router)
+	log.Print(fmt.Sprintf("Now serving: localhost%s", PORT))
+	err := http.ListenAndServe(PORT, router)
 	if err != nil {
 		log.Print(err)
 	}
+}
+
+// makes BumpResponse object and writes it to ResponseWriter
+func WriteBumpResponse(w http.ResponseWriter, code int, message string, guild Guild) {
+	br := BumpResponse{
+		Code:    code,
+		Message: message,
+		Payload: guild,
+	}
+
+	payloadByte, _ := json.Marshal(br)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write(payloadByte)
 }
 
 func main() {
