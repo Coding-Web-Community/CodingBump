@@ -3,12 +3,14 @@
 ## Usage
 Launch the API the following way:
 ```
-go build -o main src/*.go
+cd src
+go build -o main .
 ./main
 ```
 or
 ```
-go run src/*.go
+cd src
+go run .
 ```
 
 # Endpoints
@@ -26,18 +28,87 @@ Method: **POST**
 
 **JSON** Body:
 ```json
-{"guildId": "656234546654"}
+{"guildId": 636145886279237652}
 ```
 
-**Responses**:
+# **Responses**:
 
-Code | Response Header | JSON Response | Info
---- | --- | --- | ---
-**200** | `200 - Ok` | `{"guildId":65654,"timestamp":16504}` | **guildId** successfully bumped!
-**200** | `200 - Added` | `{"guildId":65654,"timestamp":16504}` |  **guildId** added to database and successfully bumped!
-**425** | `425 - TooEarly` | `{"guildId":65654,"timestamp":16504}` |  **guildId** bump delta hasn't exceeded the bumping interval. Try again later.
-**400** | `400 - Bad Request` | *None* | Bad request, make sure there are no strings in **guildId**
-**500** | `500 - InternalServerError` | *None* | Internal Server Error, try again later!
+
+### **200**
+- *200 - Ok* | **guildId** successfully bumped!
+```json
+{
+    "code": 200,
+    "message": "Guild bumped",
+    "payload": {
+        "guildId": 636145886279237652,
+        "timestamp": 1601832221
+    }
+}
+```
+
+- *200 - Added* | **guildId** successfully bumped!
+```json
+{
+    "code": 200,
+    "message": "Guild added and bumped",
+    "payload": {
+        "guildId": 636145886279237152,
+        "timestamp": 1601832254
+    }
+}
+```
+
+### **400**
+- *400 - BadRequest* | Request body contains invalid character, most likely a string or a non number
+allowed characters: 0-9
+```json
+{
+    "code": 400,
+    "message": "Request body contains invalid character",
+    "payload": {
+        "guildId": 0,
+        "timestamp": 0
+    }
+}
+```
+- *400 - BadRequest* | **guildId** needs to be 18 characters long
+```json
+{
+    "code": 400,
+    "message": "GuildId does not conform to 18 character long integer requirement",
+    "payload": {
+        "guildId": 636149237152,
+        "timestamp": 0
+    }
+}
+```
+
+### **425**
+- *425 - TooEarly* | **guildId** bump delta hasn't exceeded the bumping interval. Try again later
+```json
+{
+    "code": 425,
+    "message": "Guild bumped too early",
+    "payload": {
+        "guildId": 636145886279237152,
+        "timestamp": 1601832360
+    }
+}
+```
+
+### **500**
+- *500 - InternalServerError* | Unrecoverable internal server error. Try again later
+```json
+{
+    "code": 425,
+    "message": "",
+    "payload": {
+        "guildId": 0,
+        "timestamp": 0
+    }
+}
+```
 
 *Additional note*:
-The **JSON Response** is always a direct and latest representation of the stored guild in the database. That means when getting a `200` or `425` status code, the `timestamp` attribute represents the time that guild was last bumped in a UNIX timestamp.
+The **payload** is always a direct and latest representation of the stored guild in the database. That means when getting a `200` or `425` status code, the `timestamp` attribute represents the time that guild was last bumped in a UNIX timestamp.
