@@ -13,10 +13,15 @@ import (
 const (
 	PORT            = ":8080"
 	BUMP_INTERVAL   = 60 // 1 minute in seconds
+	TEST_INTERVAL		= 2
 	STORE_FILE_NAME = "store.json"
 )
 
-var gs GuildStore
+var (
+	TempTestInterval = 0 // used to set lower interval during testing
+	Logging = true // used to disable logging during testing
+	gs GuildStore
+)
 
 type Guild struct {
 	GuildId   int   `json:"guildId"`
@@ -47,7 +52,9 @@ func init() {
 
 func middleware(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print(fmt.Sprintf("%s%s - %s", r.Host, r.URL.Path, r.Method))
+		if Logging {
+			log.Print(fmt.Sprintf("%s%s - %s", r.Host, r.URL.Path, r.Method))
+		}
 		f(w, r)
 	}
 }
@@ -72,8 +79,8 @@ func WriteBumpResponse(w http.ResponseWriter, code int, message string, guild Gu
 
 	payloadByte, _ := json.Marshal(br)
 
+	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
 	w.Write(payloadByte)
 }
 

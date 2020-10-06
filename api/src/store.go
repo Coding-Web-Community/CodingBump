@@ -95,7 +95,14 @@ func (gs *GuildStore) PastInterval(guild Guild) bool {
 		if gsGuild.GuildId == guild.GuildId {
 
 			ts := time.Now().Unix()
-			if (ts - gsGuild.Timestamp) >= BUMP_INTERVAL {
+			var interval int64
+			if TempTestInterval == 0 {
+				interval = BUMP_INTERVAL
+			} else {
+				interval = int64(TempTestInterval)
+			}
+
+			if (ts - gsGuild.Timestamp) >= interval {
 				gs.Guilds[i].Timestamp = ts
 
 				return true
