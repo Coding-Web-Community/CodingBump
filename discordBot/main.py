@@ -130,7 +130,6 @@ async def _bump(ctx):
     bump_embed.set_footer(text=f"Guild ID: {ctx.guild.id}", icon_url=ctx.guild.icon_url)
     bump_embed.description = f"{ctx.author.mention} bumped {ctx.guild.name}"
     await ctx.send(embed=bump_embed)
-    ctx.reset_cooldown()
 
 
 # Bump errors
