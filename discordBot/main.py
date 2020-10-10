@@ -1,6 +1,5 @@
 from discord.ext import commands
 from discord import Embed, File, TextChannel, Status, CustomActivity, ActivityType, Invite
-from datetime import timedelta
 from discord.errors import LoginFailure
 from dotenv import load_dotenv
 from os import getenv, listdir
