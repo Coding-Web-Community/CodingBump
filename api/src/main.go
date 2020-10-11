@@ -13,14 +13,14 @@ import (
 const (
 	PORT            = ":8080"
 	BUMP_INTERVAL   = 60 // 1 minute in seconds
-	TEST_INTERVAL		= 2
+	TEST_INTERVAL   = 2
 	STORE_FILE_NAME = "store.json"
 )
 
 var (
-	TempTestInterval = 0 // used to set lower interval during testing
-	Logging = true // used to disable logging during testing
-	gs GuildStore
+	TempTestInterval = 0    // used to set lower interval during testing
+	Logging          = true // used to disable logging during testing
+	gs               GuildStore
 )
 
 type Guild struct {
@@ -37,6 +37,12 @@ type BumpResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Payload Guild  `json:"payload"`
+}
+
+type FetchResponse struct {
+	Code    int     `json:"code"`
+	Message string  `json:"message"`
+	Payload []Guild `json:"paypload"`
 }
 
 func init() {
@@ -62,6 +68,8 @@ func middleware(f http.HandlerFunc) http.HandlerFunc {
 func HandleRequests() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/V1/bump", middleware(BumpGuild)).Methods("POST")
+	router.HandleFunc("/V1/fetch", middleware(FetchGuilds)).Methods("GET")
+
 	log.Print(fmt.Sprintf("Now serving: localhost%s", PORT))
 	err := http.ListenAndServe(PORT, router)
 	if err != nil {
@@ -70,14 +78,28 @@ func HandleRequests() {
 }
 
 // makes BumpResponse object and writes it to ResponseWriter
-func WriteBumpResponse(w http.ResponseWriter, code int, message string, guild Guild) {
+func WriteBumpResponse(w http.ResponseWriter, code int, message string, payload Guild) {
 	br := BumpResponse{
 		Code:    code,
 		Message: message,
-		Payload: guild,
+		Payload: payload,
 	}
 
 	payloadByte, _ := json.Marshal(br)
+
+	w.WriteHeader(code)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(payloadByte)
+}
+
+func WriteFetchResponse(w http.ResponseWriter, code int, message string, payload []Guild) {
+	fr := FetchResponse{
+		Code:    code,
+		Message: message,
+		Payload: payload,
+	}
+
+	payloadByte, _ := json.Marshal(fr)
 
 	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "application/json")

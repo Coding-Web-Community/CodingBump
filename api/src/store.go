@@ -129,3 +129,16 @@ func (gs *GuildStore) GetTimestamp(guild Guild) int64 {
 
 	return 0
 }
+
+// returns guilds from guildstore
+// if there are less than 10 guilds, it returns all guilds.
+func (gs *GuildStore) GetGuilds() (guilds []Guild) {
+	gs.mutex.Lock()
+	defer gs.mutex.Unlock()
+
+	if len(gs.Guilds) >= 10 {
+		return gs.Guilds[0:9]
+	} else {
+		return gs.Guilds[0:(len(gs.Guilds))]
+	}
+}
