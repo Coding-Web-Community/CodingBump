@@ -11,9 +11,9 @@ import (
 )
 
 const (
+  URL             = "localhost"
 	PORT            = ":8080"
 	BUMP_INTERVAL   = 60 // 1 minute in seconds
-	TEST_INTERVAL   = 2
 	STORE_FILE_NAME = "store.json"
 )
 
@@ -70,7 +70,7 @@ func HandleRequests() {
 	router.HandleFunc("/V1/bump", middleware(BumpGuild)).Methods("POST")
 	router.HandleFunc("/V1/fetch", middleware(FetchGuilds)).Methods("GET")
 
-	log.Print(fmt.Sprintf("Now serving: localhost%s", PORT))
+	log.Print(fmt.Sprintf("Now serving: %s%s",URL ,PORT))
 	err := http.ListenAndServe(PORT, router)
 	if err != nil {
 		log.Print(err)

@@ -22,12 +22,17 @@ func startServer() {
 	go HandleRequests()
 }
 
+var (
+  bumpRoute = fmt.Sprintf("http://%v%v/V1/bump",URL ,PORT)
+  fetchRoute = fmt.Sprintf("http://%v%v/V1/fetch",URL ,PORT)
+)
+
 func sendInt(guildId int) (br BumpResponse) {
 	reqBody, _ := json.Marshal(map[string]int{
 		"guildId": guildId,
 	})
 
-	resp, _ := http.Post("http://localhost:8080/V1/bump", "application/json", bytes.NewBuffer(reqBody))
+	resp, _ := http.Post(bumpRoute, "application/json", bytes.NewBuffer(reqBody))
 
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -42,7 +47,7 @@ func sendString(guildId string) (br BumpResponse) {
 		"guildId": guildId,
 	})
 
-	resp, _ := http.Post("http://localhost:8080/V1/bump", "application/json", bytes.NewBuffer(reqBody))
+	resp, _ := http.Post(bumpRoute, "application/json", bytes.NewBuffer(reqBody))
 
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -50,7 +55,6 @@ func sendString(guildId string) (br BumpResponse) {
 	_ = json.Unmarshal(body, &br)
 
 	return br
-
 }
 
 func Hash(guilds []Guild) [16]byte {
@@ -180,7 +184,7 @@ func TestFetch(t *testing.T) {
 	var fr FetchResponse
 	guilds, _ := LoadStore()
 
-	resp, _ := http.Get("http://localhost:8080/V1/fetch")
+	resp, _ := http.Get(fetchRoute)
 
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
