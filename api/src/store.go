@@ -95,7 +95,14 @@ func (gs *GuildStore) PastInterval(guild Guild) bool {
 		if gsGuild.GuildId == guild.GuildId {
 
 			ts := time.Now().Unix()
-			if (ts - gsGuild.Timestamp) >= BUMP_INTERVAL {
+			var interval int64
+			if TempTestInterval == 0 {
+				interval = BUMP_INTERVAL
+			} else {
+				interval = int64(TempTestInterval)
+			}
+
+			if (ts - gsGuild.Timestamp) >= interval {
 				gs.Guilds[i].Timestamp = ts
 
 				return true
@@ -121,4 +128,17 @@ func (gs *GuildStore) GetTimestamp(guild Guild) int64 {
 	}
 
 	return 0
+}
+
+// returns guilds from guildstore
+// if there are less than 10 guilds, it returns all guilds.
+func (gs *GuildStore) GetGuilds() (guilds []Guild) {
+	gs.mutex.Lock()
+	defer gs.mutex.Unlock()
+
+	if len(gs.Guilds) >= 10 {
+		return gs.Guilds[0:9]
+	} else {
+		return gs.Guilds[0:(len(gs.Guilds))]
+	}
 }

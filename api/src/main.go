@@ -11,12 +11,17 @@ import (
 )
 
 const (
+  URL             = "localhost"
 	PORT            = ":8080"
 	BUMP_INTERVAL   = 60 // 1 minute in seconds
 	STORE_FILE_NAME = "store.json"
 )
 
-var gs GuildStore
+var (
+	TempTestInterval = 0    // used to set lower interval during testing
+	Logging          = true // used to disable logging during testing
+	gs               GuildStore
+)
 
 type Guild struct {
 	GuildId   int   `json:"guildId"`
@@ -34,6 +39,12 @@ type BumpResponse struct {
 	Payload Guild  `json:"payload"`
 }
 
+type FetchResponse struct {
+	Code    int     `json:"code"`
+	Message string  `json:"message"`
+	Payload []Guild `json:"paypload"`
+}
+
 func init() {
 	var err error
 	gs.Guilds, err = LoadStore()
@@ -47,7 +58,9 @@ func init() {
 
 func middleware(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print(fmt.Sprintf("%s%s - %s", r.Host, r.URL.Path, r.Method))
+		if Logging {
+			log.Print(fmt.Sprintf("%s%s - %s", r.Host, r.URL.Path, r.Method))
+		}
 		f(w, r)
 	}
 }
@@ -55,7 +68,9 @@ func middleware(f http.HandlerFunc) http.HandlerFunc {
 func HandleRequests() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/V1/bump", middleware(BumpGuild)).Methods("POST")
-	log.Print(fmt.Sprintf("Now serving: localhost%s", PORT))
+	router.HandleFunc("/V1/fetch", middleware(FetchGuilds)).Methods("GET")
+
+	log.Print(fmt.Sprintf("Now serving: %s%s",URL ,PORT))
 	err := http.ListenAndServe(PORT, router)
 	if err != nil {
 		log.Print(err)
@@ -63,17 +78,31 @@ func HandleRequests() {
 }
 
 // makes BumpResponse object and writes it to ResponseWriter
-func WriteBumpResponse(w http.ResponseWriter, code int, message string, guild Guild) {
+func WriteBumpResponse(w http.ResponseWriter, code int, message string, payload Guild) {
 	br := BumpResponse{
 		Code:    code,
 		Message: message,
-		Payload: guild,
+		Payload: payload,
 	}
 
 	payloadByte, _ := json.Marshal(br)
 
+	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
+	w.Write(payloadByte)
+}
+
+func WriteFetchResponse(w http.ResponseWriter, code int, message string, payload []Guild) {
+	fr := FetchResponse{
+		Code:    code,
+		Message: message,
+		Payload: payload,
+	}
+
+	payloadByte, _ := json.Marshal(fr)
+
+	w.WriteHeader(code)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(payloadByte)
 }
 
