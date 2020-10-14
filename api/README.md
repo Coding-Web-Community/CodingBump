@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Coding-Web-Community/CodingBump.svg?branch=master)](https://travis-ci.org/Coding-Web-Community/CodingBump)
 # Central API
 
 ## Usage

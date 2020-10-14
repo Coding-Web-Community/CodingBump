@@ -1,0 +1,10 @@
+language: go
+
+go:
+  - 1.x
+  - 1.15
+
+script:
+  - cd api/src
+  - go test -v .
+  - go build
