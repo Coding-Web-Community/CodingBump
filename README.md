@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Coding-Web-Community/CodingBump.svg?branch=master)](https://travis-ci.org/Coding-Web-Community/CodingBump)
+[![Build Status](https://travis-ci.org/Coding-Web-Community/CodingBump.svg?branch=main)](https://travis-ci.org/Coding-Web-Community/CodingBump)
 # CodingBump
 Disboard clone (for now)
 
