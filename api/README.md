@@ -132,7 +132,7 @@ Method: **GET**
 {
     "code":200,
     "message":"Ok",
-    "paypload":[
+    "payload":[
       {"guildId":636145886279237699,"timestamp":1602394289},
       {"guildId":636123886245557612,"timestamp":1602394230}
     ]
@@ -145,7 +145,7 @@ Method: **GET**
 {
     "code":400,
     "message":"BadRequest",
-    "paypload":[
+    "payload":[
       {}
     ]
   }
